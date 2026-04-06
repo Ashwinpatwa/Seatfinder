@@ -137,7 +137,7 @@ export default function App() {
             transition={{ delay: 0.4 }}
             className="text-indigo-300/80 text-sm font-medium mt-1"
           >
-            ATKT Examination JULY-DEC 2025
+            ATKT Examination JULY-DEC 2025 • 06/04/2026
           </motion.p>
         </div>
       </header>
@@ -366,7 +366,7 @@ export default function App() {
                 <div>
                   <h4 className="font-bold text-slate-800 mb-1">Exam Timing</h4>
                   <p className="text-sm text-slate-500 leading-relaxed">
-                    All exams are scheduled from 11:00 AM to 2:00 PM. Please arrive 30 minutes early.
+                    All exams are scheduled from 11:30 AM to 2:30 PM. Please arrive 30 minutes early.
                   </p>
                 </div>
               </div>
