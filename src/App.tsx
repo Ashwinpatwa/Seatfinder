@@ -5,17 +5,21 @@ import { SEATING_DATA, CONSOLIDATED_ROOMS } from './data';
 import { StudentSeat } from './types';
 
 const ROOM_LAYOUTS: Record<string, { columns: number; rowsPerColumn: number[] }> = {
-  'FR-1': {
+  'FR-01': {
     columns: 5,
-    rowsPerColumn: [5, 5, 5, 5, 5]
+    rowsPerColumn: [5, 5, 5, 5, 5] // 5 rows per column, total 25 benches (50 seats)
   },
-  'FR-2': {
-    columns: 2,
-    rowsPerColumn: [9, 8]
+  'FR-02': {
+    columns: 4,
+    rowsPerColumn: [8, 8, 8, 8] // 8 rows per column, total 32 benches (64 seats)
   },
-  'FR-19': {
+  'FR-03': {
+    columns: 5,
+    rowsPerColumn: [6, 6, 6, 6, 6] // 6 rows per column, total 30 benches (60 seats)
+  },
+  'FR-04': {
     columns: 6,
-    rowsPerColumn: [13, 13, 13, 13, 13, 12]
+    rowsPerColumn: [5, 5, 5, 5, 5, 5] // 5 rows per column, total 30 benches (60 seats)
   }
 };
 
@@ -137,7 +141,7 @@ export default function App() {
             transition={{ delay: 0.4 }}
             className="text-indigo-300/80 text-sm font-medium mt-1"
           >
-            ATKT Examination JULY-DEC 2025 • 06/04/2026
+            END SEM ATKT EXAMINATION JAN-2026 • 07/04/2026
           </motion.p>
         </div>
       </header>
@@ -312,22 +316,27 @@ export default function App() {
                   </div>
                   <h3 className="text-xl font-bold mb-2">Data Coverage Report</h3>
                   <p className="text-indigo-200 text-sm mb-6">
-                    Currently, detailed seating (bench numbers) is available for <span className="text-white font-bold">Room FR-1</span>, <span className="text-white font-bold">Room FR-2</span>, and <span className="text-white font-bold">Room FR-19</span>.
+                    Currently, detailed seating (bench numbers) is available for <span className="text-white font-bold">Room FR-01</span>, <span className="text-white font-bold">Room FR-02</span>, <span className="text-white font-bold">Room FR-03</span>, and <span className="text-white font-bold">Room FR-04</span>.
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
-                      <p className="text-xs font-bold text-indigo-300 uppercase mb-1">Room FR-1</p>
+                      <p className="text-xs font-bold text-indigo-300 uppercase mb-1">Room FR-01</p>
                       <p className="text-lg font-bold">47 Students</p>
                       <p className="text-[10px] text-emerald-400 font-bold mt-1">✓ Detailed Data Loaded</p>
                     </div>
                     <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
-                      <p className="text-xs font-bold text-indigo-300 uppercase mb-1">Room FR-2</p>
-                      <p className="text-lg font-bold">17 Students</p>
+                      <p className="text-xs font-bold text-indigo-300 uppercase mb-1">Room FR-02</p>
+                      <p className="text-lg font-bold">52 Students</p>
                       <p className="text-[10px] text-emerald-400 font-bold mt-1">✓ Detailed Data Loaded</p>
                     </div>
                     <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
-                      <p className="text-xs font-bold text-indigo-300 uppercase mb-1">Room FR-19</p>
-                      <p className="text-lg font-bold">149 Students</p>
+                      <p className="text-xs font-bold text-indigo-300 uppercase mb-1">Room FR-03</p>
+                      <p className="text-lg font-bold">56 Students</p>
+                      <p className="text-[10px] text-emerald-400 font-bold mt-1">✓ Detailed Data Loaded</p>
+                    </div>
+                    <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
+                      <p className="text-xs font-bold text-indigo-300 uppercase mb-1">Room FR-04</p>
+                      <p className="text-lg font-bold">42 Students</p>
                       <p className="text-[10px] text-emerald-400 font-bold mt-1">✓ Detailed Data Loaded</p>
                     </div>
                   </div>
