@@ -87,6 +87,8 @@ export default function App() {
   const [result, setResult] = useState<StudentSeat | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const query = searchQuery.trim().toUpperCase();
@@ -97,13 +99,25 @@ export default function App() {
     );
     setResult(found || null);
     setHasSearched(true);
+    setSelectedRoom(null);
   };
 
   const clearSearch = () => {
     setSearchQuery('');
     setResult(null);
     setHasSearched(false);
+    setSelectedRoom(null);
   };
+
+  const roomStudents = useMemo(() => {
+    if (!selectedRoom) return [];
+    return SEATING_DATA.filter(s => s.room === selectedRoom);
+  }, [selectedRoom]);
+
+  const selectedRoomInfo = useMemo(() => {
+    if (!selectedRoom) return null;
+    return CONSOLIDATED_ROOMS.find(r => r.room === selectedRoom);
+  }, [selectedRoom]);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
@@ -141,7 +155,7 @@ export default function App() {
             transition={{ delay: 0.4 }}
             className="text-indigo-300/80 text-sm font-medium mt-1"
           >
-            END SEM ATKT EXAMINATION JAN-2026 • 07/04/2026
+            END SEM ATKT EXAMINATION JAN-2026 • 08/04/2026
           </motion.p>
         </div>
       </header>
@@ -300,6 +314,83 @@ export default function App() {
                 </button>
               </motion.div>
             )
+          ) : selectedRoom ? (
+            <motion.div
+              key="room-details"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              <div className="bg-white rounded-3xl shadow-lg overflow-hidden border border-slate-100">
+                <div className="bg-indigo-600 px-6 py-4 flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => setSelectedRoom(null)}
+                      className="text-indigo-100 hover:text-white transition-colors"
+                    >
+                      <ChevronRight className="rotate-180" size={24} />
+                    </button>
+                    <span className="text-indigo-100 text-sm font-bold tracking-wider uppercase">Room {selectedRoom} Details</span>
+                  </div>
+                  <span className="bg-white/20 text-white px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm">
+                    {roomStudents.length} Students
+                  </span>
+                </div>
+                
+                <div className="p-6 border-b border-slate-50">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Programs in this Room</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedRoomInfo?.programs.map((prog, i) => (
+                      <span key={i} className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-indigo-100">
+                        {prog}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50">
+                        <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Seat</th>
+                        <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Enrollment ID</th>
+                        <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Location</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {roomStudents.sort((a, b) => {
+                        const seatA = a.seat;
+                        const seatB = b.seat;
+                        const rowA = seatA[0];
+                        const rowB = seatB[0];
+                        const numA = parseInt(seatA.substring(1));
+                        const numB = parseInt(seatB.substring(1));
+                        if (rowA !== rowB) return rowA.localeCompare(rowB);
+                        return numA - numB;
+                      }).map((student) => (
+                        <tr key={student.enrollmentId} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 font-bold text-xs">
+                              {student.seat}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 font-mono text-sm font-bold text-slate-700">{student.enrollmentId}</td>
+                          <td className="px-6 py-4 text-xs text-slate-500">{student.floor}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedRoom(null)}
+                className="w-full py-4 bg-white border-2 border-slate-100 text-slate-500 font-bold rounded-2xl hover:bg-slate-50 transition-colors shadow-sm"
+              >
+                Back to Dashboard
+              </button>
+            </motion.div>
           ) : (
             <motion.div
               key="initial"
@@ -316,29 +407,23 @@ export default function App() {
                   </div>
                   <h3 className="text-xl font-bold mb-2">Data Coverage Report</h3>
                   <p className="text-indigo-200 text-sm mb-6">
-                    Currently, detailed seating (bench numbers) is available for <span className="text-white font-bold">Room FR-01</span>, <span className="text-white font-bold">Room FR-02</span>, <span className="text-white font-bold">Room FR-03</span>, and <span className="text-white font-bold">Room FR-04</span>.
+                    Detailed seating data is available for the following rooms. Click a room to view the full seating plan.
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                    <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
-                      <p className="text-xs font-bold text-indigo-300 uppercase mb-1">Room FR-01</p>
-                      <p className="text-lg font-bold">47 Students</p>
-                      <p className="text-[10px] text-emerald-400 font-bold mt-1">✓ Detailed Data Loaded</p>
-                    </div>
-                    <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
-                      <p className="text-xs font-bold text-indigo-300 uppercase mb-1">Room FR-02</p>
-                      <p className="text-lg font-bold">52 Students</p>
-                      <p className="text-[10px] text-emerald-400 font-bold mt-1">✓ Detailed Data Loaded</p>
-                    </div>
-                    <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
-                      <p className="text-xs font-bold text-indigo-300 uppercase mb-1">Room FR-03</p>
-                      <p className="text-lg font-bold">56 Students</p>
-                      <p className="text-[10px] text-emerald-400 font-bold mt-1">✓ Detailed Data Loaded</p>
-                    </div>
-                    <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm border border-white/10">
-                      <p className="text-xs font-bold text-indigo-300 uppercase mb-1">Room FR-04</p>
-                      <p className="text-lg font-bold">42 Students</p>
-                      <p className="text-[10px] text-emerald-400 font-bold mt-1">✓ Detailed Data Loaded</p>
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {CONSOLIDATED_ROOMS.map((room) => (
+                      <button
+                        key={room.room}
+                        onClick={() => setSelectedRoom(room.room)}
+                        className="bg-white/10 hover:bg-white/20 rounded-2xl p-4 backdrop-blur-sm border border-white/10 text-left transition-all group"
+                      >
+                        <div className="flex justify-between items-start mb-1">
+                          <p className="text-xs font-bold text-indigo-300 uppercase">Room {room.room}</p>
+                          <ChevronRight size={16} className="text-indigo-400 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                        <p className="text-lg font-bold">{room.totalStudents} Students</p>
+                        <p className="text-[10px] text-emerald-400 font-bold mt-1">✓ Detailed Data Loaded</p>
+                      </button>
+                    ))}
                   </div>
                 </div>
                 <div className="absolute top-0 right-0 -mr-12 -mt-12 w-48 h-48 bg-white/5 rounded-full blur-3xl" />
@@ -355,7 +440,7 @@ export default function App() {
                     Try searching for these IDs to see how it works:
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {['23ENG1EEE0021', '24MGT4ABM0006', '25ENG9MEC0044'].map(id => (
+                    {['21ENG8CIV0016', '23COA2BCA0027', '24MGT2MBB0039'].map(id => (
                       <button
                         key={id}
                         onClick={() => setSearchQuery(id)}
