@@ -23,17 +23,21 @@ const ROOM_LAYOUTS: Record<string, { columns: number; rowsPerColumn: number[] }>
   }
 };
 
-function SeatMap({ result }: { result: StudentSeat }) {
-  const layout = ROOM_LAYOUTS[result.room];
+function SeatMap({ result, allStudents, room }: { result?: StudentSeat; allStudents?: StudentSeat[]; room?: string }) {
+  const roomName = result?.room || room;
+  if (!roomName) return null;
+  
+  const layout = ROOM_LAYOUTS[roomName];
   if (!layout) return null;
 
+  const occupiedSeats = new Set(allStudents?.map(s => s.seat) || []);
   let currentStart = 1;
 
   return (
     <div className="bg-white rounded-3xl shadow-lg p-6 border border-slate-100 overflow-x-auto">
       <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
         <Info size={20} className="text-indigo-500" />
-        Room {result.room} Layout Guide
+        Room {roomName} Seating Layout
       </h3>
       <div className="flex gap-6 min-w-max pb-4">
         {layout.rowsPerColumn.map((rowCount, colIdx) => {
@@ -47,15 +51,25 @@ function SeatMap({ result }: { result: StudentSeat }) {
                 const seatNum = start + i;
                 const seatA = `A${seatNum}`;
                 const seatB = `B${seatNum}`;
-                const isMySeatA = result.seat === seatA;
-                const isMySeatB = result.seat === seatB;
+                
+                const isMySeatA = result?.seat === seatA;
+                const isMySeatB = result?.seat === seatB;
+                
+                const isOccupiedA = occupiedSeats.has(seatA);
+                const isOccupiedB = occupiedSeats.has(seatB);
 
                 return (
                   <div key={i} className="flex gap-1">
-                    <div className={`w-10 h-8 rounded-md flex items-center justify-center text-[10px] font-bold transition-all ${isMySeatA ? 'bg-indigo-600 text-white scale-110 shadow-lg ring-2 ring-indigo-200' : 'bg-slate-100 text-slate-400'}`}>
+                    <div className={`w-10 h-8 rounded-md flex items-center justify-center text-[10px] font-bold transition-all 
+                      ${isMySeatA ? 'bg-indigo-600 text-white scale-110 shadow-lg ring-2 ring-indigo-200 z-10' : 
+                        isOccupiedA ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 
+                        'bg-slate-100 text-slate-400'}`}>
                       {seatA}
                     </div>
-                    <div className={`w-10 h-8 rounded-md flex items-center justify-center text-[10px] font-bold transition-all ${isMySeatB ? 'bg-indigo-600 text-white scale-110 shadow-lg ring-2 ring-indigo-200' : 'bg-slate-100 text-slate-400'}`}>
+                    <div className={`w-10 h-8 rounded-md flex items-center justify-center text-[10px] font-bold transition-all 
+                      ${isMySeatB ? 'bg-indigo-600 text-white scale-110 shadow-lg ring-2 ring-indigo-200 z-10' : 
+                        isOccupiedB ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 
+                        'bg-slate-100 text-slate-400'}`}>
                       {seatB}
                     </div>
                   </div>
@@ -65,14 +79,20 @@ function SeatMap({ result }: { result: StudentSeat }) {
           );
         })}
       </div>
-      <div className="mt-4 flex items-center justify-center gap-6 text-xs font-medium text-slate-500 border-t border-slate-50 pt-4">
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-6 text-xs font-medium text-slate-500 border-t border-slate-50 pt-4">
+        {result && (
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-indigo-600 rounded-sm" />
+            <span>Your Seat</span>
+          </div>
+        )}
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-indigo-600 rounded-sm" />
-          <span>Your Seat</span>
+          <div className="w-3 h-3 bg-emerald-100 border border-emerald-200 rounded-sm" />
+          <span>Occupied</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-slate-100 rounded-sm" />
-          <span>Available</span>
+          <span>Empty</span>
         </div>
       </div>
       <p className="mt-4 text-center text-[10px] text-slate-400 italic">
@@ -88,6 +108,12 @@ export default function App() {
   const [hasSearched, setHasSearched] = useState(false);
 
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>('09/04/2026');
+
+  const availableDates = useMemo(() => {
+    const dates = new Set(SEATING_DATA.map(s => s.date));
+    return Array.from(dates).sort();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +121,7 @@ export default function App() {
     if (!query) return;
 
     const found = SEATING_DATA.find(s => 
-      s.enrollmentId.trim().toUpperCase() === query
+      s.enrollmentId.trim().toUpperCase() === query && s.date === selectedDate
     );
     setResult(found || null);
     setHasSearched(true);
@@ -111,13 +137,23 @@ export default function App() {
 
   const roomStudents = useMemo(() => {
     if (!selectedRoom) return [];
-    return SEATING_DATA.filter(s => s.room === selectedRoom);
-  }, [selectedRoom]);
+    return SEATING_DATA.filter(s => s.room === selectedRoom && s.date === selectedDate);
+  }, [selectedRoom, selectedDate]);
 
   const selectedRoomInfo = useMemo(() => {
     if (!selectedRoom) return null;
     return CONSOLIDATED_ROOMS.find(r => r.room === selectedRoom);
   }, [selectedRoom]);
+
+  const roomStats = useMemo(() => {
+    return CONSOLIDATED_ROOMS.map(room => {
+      const count = SEATING_DATA.filter(s => s.room === room.room && s.date === selectedDate).length;
+      return {
+        ...room,
+        currentCount: count
+      };
+    });
+  }, [selectedDate]);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
@@ -155,7 +191,7 @@ export default function App() {
             transition={{ delay: 0.4 }}
             className="text-indigo-300/80 text-sm font-medium mt-1"
           >
-            END SEM ATKT EXAMINATION JAN-2026 • 08/04/2026
+            END SEM ATKT EXAMINATION JAN-2026 • {selectedDate}
           </motion.p>
         </div>
       </header>
@@ -167,30 +203,54 @@ export default function App() {
           animate={{ opacity: 1, scale: 1 }}
           className="bg-white rounded-3xl shadow-xl p-6 md:p-8 mb-8 border border-slate-100"
         >
-          <form onSubmit={handleSearch} className="relative">
-            <label htmlFor="search" className="block text-sm font-semibold text-slate-500 mb-3 ml-1">
-              Enter Enrollment ID
-            </label>
-            <div className="relative flex items-center">
-              <div className="absolute left-4 text-slate-400">
-                <Search size={20} />
-              </div>
-              <input
-                id="search"
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="e.g. 23ENG1EEE0021"
-                className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-indigo-500 focus:ring-0 transition-all text-lg font-medium placeholder:text-slate-300"
-              />
-              <button
-                type="submit"
-                className="absolute right-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-semibold transition-colors shadow-md"
-              >
-                Search
-              </button>
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex-1">
+              <form onSubmit={handleSearch} className="relative">
+                <label htmlFor="search" className="block text-sm font-semibold text-slate-500 mb-3 ml-1">
+                  Enter Enrollment ID
+                </label>
+                <div className="relative flex items-center">
+                  <div className="absolute left-4 text-slate-400">
+                    <Search size={20} />
+                  </div>
+                  <input
+                    id="search"
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="e.g. 23ENG1EEE0021"
+                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-indigo-500 focus:ring-0 transition-all text-lg font-medium placeholder:text-slate-300"
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-semibold transition-colors shadow-md"
+                  >
+                    Search
+                  </button>
+                </div>
+              </form>
             </div>
-          </form>
+            
+            <div className="md:w-48">
+              <label className="block text-sm font-semibold text-slate-500 mb-3 ml-1">
+                Select Exam Date
+              </label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                  <Calendar size={18} />
+                </div>
+                <select
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-full pl-11 pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-indigo-500 focus:ring-0 transition-all text-sm font-bold text-slate-700 appearance-none cursor-pointer"
+                >
+                  {availableDates.map(date => (
+                    <option key={date} value={date}>{date}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
         </motion.div>
 
         {/* Results Area */}
@@ -349,6 +409,11 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Visual Map in Room Browser */}
+                <div className="p-6 border-b border-slate-50 bg-slate-50/30">
+                  <SeatMap room={selectedRoom} allStudents={roomStudents} />
+                </div>
+
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
@@ -410,7 +475,7 @@ export default function App() {
                     Detailed seating data is available for the following rooms. Click a room to view the full seating plan.
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {CONSOLIDATED_ROOMS.map((room) => (
+                    {roomStats.map((room) => (
                       <button
                         key={room.room}
                         onClick={() => setSelectedRoom(room.room)}
@@ -420,8 +485,12 @@ export default function App() {
                           <p className="text-xs font-bold text-indigo-300 uppercase">Room {room.room}</p>
                           <ChevronRight size={16} className="text-indigo-400 group-hover:translate-x-1 transition-transform" />
                         </div>
-                        <p className="text-lg font-bold">{room.totalStudents} Students</p>
-                        <p className="text-[10px] text-emerald-400 font-bold mt-1">✓ Detailed Data Loaded</p>
+                        <p className="text-lg font-bold">{room.currentCount} Students</p>
+                        {room.currentCount > 0 ? (
+                          <p className="text-[10px] text-emerald-400 font-bold mt-1">✓ Detailed Data Loaded</p>
+                        ) : (
+                          <p className="text-[10px] text-indigo-300/50 font-bold mt-1">No Data for this Date</p>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -440,7 +509,7 @@ export default function App() {
                     Try searching for these IDs to see how it works:
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {['21ENG8CIV0016', '23COA2BCA0027', '24MGT2MBB0039'].map(id => (
+                    {['23ENG1MEC0036', '23MGT2BBA0005', '21ENG8CIV0016'].map(id => (
                       <button
                         key={id}
                         onClick={() => setSearchQuery(id)}
